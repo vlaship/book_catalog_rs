@@ -15,5 +15,6 @@ env_logger = "*"
 validator = "*"
 validator_derive = "*"
 chrono = "*"
-argon2 = "0.5"
+argon2 = "*"
 rand = "*"
+sqlx = { version = "*", features = ["runtime-actix-native-tls", "postgres"] }

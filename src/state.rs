@@ -1,15 +1,11 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
-use crate::user::model::User;
+use sqlx::postgres::PgPool;
 
 pub struct AppState {
-    pub users: Mutex<HashMap<String, User>>,
+    pub db_pool: PgPool,
 }
 
 impl AppState {
-    pub fn new() -> Self {
-        AppState {
-            users: Mutex::new(HashMap::new()),
-        }
+    pub fn new(db_pool: PgPool) -> Self {
+        AppState { db_pool }
     }
 }
