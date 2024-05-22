@@ -1,0 +1,17 @@
+[package]
+name = "book-catalog"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "*"
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+dotenv = "*"
+rs-snowflake = "*"
+lazy_static = "*"
+log = "*"
+env_logger = "*"
+validator = "*"
+validator_derive = "*"
+chrono = "*"

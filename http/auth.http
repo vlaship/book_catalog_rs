@@ -1,0 +1,19 @@
+@host=http://localhost:8888
+
+### sign up
+post {{host}}/v1/auth/signup
+Content-Type: application/json
+
+{
+    "login": "",
+    "password": "123456"
+}
+
+### sign in
+post {{host}}/v1/auth/signin
+Content-Type: application/json
+
+{
+    "login": "",
+    "password": "123456"
+}
