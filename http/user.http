@@ -1,0 +1,4 @@
+@host=http://localhost:8888
+
+### get user list
+get {{host}}/v1/user/list

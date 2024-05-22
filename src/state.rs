@@ -1,8 +1,9 @@
-use std::sync::Mutex;
 use std::collections::HashMap;
+use std::sync::Mutex;
+use crate::user::model::User;
 
 pub struct AppState {
-    pub users: Mutex<HashMap<String, String>>, // Simple in-memory store for example purposes
+    pub users: Mutex<HashMap<String, User>>,
 }
 
 impl AppState {

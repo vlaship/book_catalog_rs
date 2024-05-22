@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use validator_derive::Validate; // Import the Validate derive macro
+use validator_derive::Validate;
 
 #[derive(Deserialize, Validate)]
 pub struct SignupRequest {

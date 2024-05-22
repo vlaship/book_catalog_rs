@@ -1,16 +1,8 @@
 use actix_web::{HttpResponse, http::StatusCode};
 use serde_json::{json, Value};
 use chrono::Utc;
-use serde::Serialize;
+use crate::http::model::ErrorResponse;
 
-#[derive(Serialize)]
-pub struct ErrorResponse {
-    pub status: u16,
-    pub message: String,
-    pub timestamp: String,
-    pub path: String,
-    pub errors: Option<Value>, // Optional field for validation errors
-}
 
 impl ErrorResponse {
     pub fn new(status: StatusCode, message: &str, path: &str, errors: Option<Value>) -> Self {

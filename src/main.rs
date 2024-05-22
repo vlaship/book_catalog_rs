@@ -1,8 +1,9 @@
 mod routes;
-mod models;
 mod state;
-mod service;
-mod error_handlers;
+mod http;
+mod auth;
+mod user;
+mod utils; 
 
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
