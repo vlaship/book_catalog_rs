@@ -18,3 +18,4 @@ chrono = "*"
 argon2 = "*"
 rand = "*"
 sqlx = { version = "*", features = ["runtime-actix-native-tls", "postgres", "migrate"] }
+thiserror = "*"

@@ -1,8 +1,9 @@
 use actix_web::{HttpResponse, http::StatusCode};
 use serde_json::{json, Value};
 use chrono::Utc;
+use crate::err::errors::AppError;
+use crate::err::errors::AppError::{BadRequest, CreateUserError, FindUserError, ListUsersError, NotFound, Unauthorized};
 use crate::http::model::ErrorResponse;
-
 
 impl ErrorResponse {
     pub fn new(status: StatusCode, message: &str, path: &str, errors: Option<Value>) -> Self {
@@ -36,6 +37,20 @@ pub fn format_validation_errors(errors: validator::ValidationErrors) -> Value {
         error_map.insert(field.to_string(), json!(messages));
     }
     json!(error_map)
+}
+
+// handle all AppError: NotFound call handle_404_error, and so on
+pub fn handle_error(error: AppError, path: &str) -> HttpResponse {
+    match error {
+        BadRequest() => handle_400_error(&error.to_string(), path, None),
+        Unauthorized() => handle_401_error(&error.to_string(), path),
+        NotFound() => handle_404_error(&error.to_string(), path),
+        ListUsersError() => handle_500_error(&error.to_string(), path),
+        FindUserError(_) => handle_404_error(&error.to_string(), path),
+        CreateUserError(_) => handle_500_error(&error.to_string(), path),
+
+        _ => handle_500_error(&error.to_string(), path),
+    }
 }
 
 pub fn handle_400_error(message: &str, path: &str, errors: Option<Value>) -> HttpResponse {

@@ -1,16 +1,15 @@
-mod routes;
-mod state;
-mod http;
 mod auth;
-mod user;
-mod utils; 
 mod db;
+mod http;
+mod routes;
+mod user;
+mod utils;
+mod err;
 
-use actix_web::{web, App, HttpServer};
+use actix_web::{App, HttpServer};
 use dotenv::dotenv;
-use std::env;
-use state::AppState;
 use log::info;
+use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -22,18 +21,15 @@ async fn main() -> std::io::Result<()> {
     let pool = db::init::init_db_pool().await;
     db::migrate::run_migrations(&pool).await;
 
-    let app_state = web::Data::new(AppState::new(pool));
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
     let bind_address = format!("127.0.0.1:{}", port);
 
     info!("Binding server to address: {}", bind_address);
 
     HttpServer::new(move || {
-        App::new()
-            .app_data(app_state.clone())
-            .configure(routes::configure)
+        App::new().configure(routes::config_factory(pool.clone()))
     })
-    .bind(bind_address)?
-    .run()
-    .await
+        .bind(bind_address)?
+        .run()
+        .await
 }
