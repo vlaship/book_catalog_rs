@@ -1,7 +1,5 @@
-@host=http://localhost:8888
-
 ### sign up
-post {{host}}/v1/auth/signup
+POST {{host}}/v1/auth/signup
 Content-Type: application/json
 
 {
@@ -10,7 +8,7 @@ Content-Type: application/json
 }
 
 ### sign in
-post {{host}}/v1/auth/signin
+POST {{host}}/v1/auth/signin
 Content-Type: application/json
 
 {

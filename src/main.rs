@@ -11,7 +11,6 @@ use dotenv::dotenv;
 use std::env;
 use state::AppState;
 use log::info;
-use sqlx::postgres::PgPool;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -20,8 +19,8 @@ async fn main() -> std::io::Result<()> {
 
     info!("Starting the application...");
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let pool = PgPool::connect(&database_url).await.expect("Failed to create pool.");
+    let pool = db::init::init_db_pool().await;
+    db::migrate::run_migrations(&pool).await;
 
     let app_state = web::Data::new(AppState::new(pool));
     let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
@@ -38,4 +37,3 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
-
