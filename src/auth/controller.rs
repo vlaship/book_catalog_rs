@@ -1,39 +1,56 @@
-use crate::auth::service::{sign_in, sign_up};
-use crate::http::error_handlers::{format_validation_errors, handle_400_error, handle_401_error};
+use crate::auth::service::AuthService;
+use crate::http::error_handlers::{format_validation_errors, handle_400_error, handle_401_error, handle_500_error, handle_error};
 use crate::auth::model::{SigninRequest, SigninResponse, SignupRequest, SignupResponse};
-use crate::state::AppState;
 use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use log::info;
 use validator::Validate;
 
-pub async fn signup(data: web::Data<AppState>, info: web::Json<SignupRequest>, req: HttpRequest) -> impl Responder {
-    let signup_request = info.into_inner();
-
-    if let Err(e) = signup_request.validate() {
-        return handle_400_error("Validation error", req.path(), Some(format_validation_errors(e)));
-    }
-
-    match sign_up(&data, signup_request).await {
-        Ok(user_id) => {
-            info!("New user signed up with ID: {}", user_id);
-            HttpResponse::Ok().json(SignupResponse { id: user_id.to_string() })
-        },
-        Err(_) => HttpResponse::InternalServerError().finish(),
-    }
+#[derive(Clone)]
+pub struct AuthController {
+    svc: AuthService,
 }
 
-pub async fn signin(data: web::Data<AppState>, info: web::Json<SigninRequest>, req: HttpRequest) -> impl Responder {
-    let signin_request = info.into_inner();
-
-    if let Err(e) = signin_request.validate() {
-        return handle_400_error("Validation error", req.path(), Some(format_validation_errors(e)));
+impl AuthController {
+    pub fn new(auth_service: AuthService) -> Self {
+        Self { svc: auth_service }
     }
 
-    if let Some(jwt) = sign_in(&data, &signin_request).await {
-        info!("User signed in: {}", signin_request.login);
-        return HttpResponse::Ok().json(SigninResponse { jwt });
+    pub async fn signup(
+        &self,
+        req: HttpRequest,
+        body: web::Json<SignupRequest>,
+    ) -> impl Responder {
+        let signup_request = body.into_inner();
+
+        if let Err(e) = signup_request.validate() {
+            return handle_400_error("Validation error", req.path(), Some(format_validation_errors(e)));
+        }
+
+        match self.svc.sign_up(signup_request).await {
+            Ok(user_id) => {
+                info!("New user signed up with ID: {}", user_id);
+                HttpResponse::Ok().json(SignupResponse { id: user_id.to_string() })
+            }
+            Err(e) => handle_error(e, req.path()),
+        }
     }
 
-    handle_401_error("Invalid login credentials", req.path())
+    pub async fn signin(
+        &self,
+        req: HttpRequest,
+        body: web::Json<SigninRequest>,
+    ) -> impl Responder {
+        let signin_request = body.into_inner();
+
+        if let Err(e) = signin_request.validate() {
+            return handle_400_error("Validation error", req.path(), Some(format_validation_errors(e)));
+        }
+
+        if let Some(jwt) = self.svc.sign_in(&signin_request).await {
+            info!("User signed in: {}", signin_request.login);
+            return HttpResponse::Ok().json(SigninResponse { jwt });
+        }
+
+        handle_401_error("Invalid login credentials", req.path())
+    }
 }
-

@@ -1,4 +1,5 @@
 ### get user list
 GET {{host}}/v1/user/list
 
-### get user by id
+### get user by login
+GET {{host}}/v1/user/login
