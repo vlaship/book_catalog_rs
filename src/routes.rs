@@ -15,9 +15,6 @@ pub fn configure(cfg: &mut ServiceConfig, pool: &PgPool) {
     let auth_svc = AuthService::new(user_repo.clone());
     let auth_ctrl = AuthController::new(auth_svc);
 
-    cfg.app_data(web::Data::new(user_ctrl.clone()));
-    cfg.app_data(web::Data::new(auth_ctrl.clone()));
-
     let user_ctrl_clone = user_ctrl.clone();
     cfg.route("/v1/user/{login}", web::get().to(move |req: HttpRequest, login: web::Path<String>| {
         let user_ctrl = user_ctrl_clone.clone();
