@@ -1,1 +1,2 @@
-pub mod users;
+pub mod init;
+pub mod migrate;
