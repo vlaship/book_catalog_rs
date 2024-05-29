@@ -1,1 +1,1 @@
-### simple web app on rust
+### Book Catalog
