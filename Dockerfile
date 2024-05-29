@@ -17,7 +17,7 @@ RUN cargo build --release
 FROM alpine:3.19
 
 # Update the package repository and install necessary packages
-RUN apk update && apk upgrade && \
+RUN apk update --no-cache && apk upgrade && \
     rm -rf /var/cache/apk/* && \
     rm -rf /tmp/*
 
@@ -29,7 +29,7 @@ RUN adduser -D appuser
 USER appuser
 
 # Set the working directory inside the container
-WORKDIR /usr/src/book-catalog
+WORKDIR /app
 
 # Copy the built binary from the builder stage
 COPY --from=builder /tmp/target/release/book-catalog .
