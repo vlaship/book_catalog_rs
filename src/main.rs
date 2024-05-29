@@ -6,13 +6,14 @@ mod user;
 mod utils;
 mod err;
 
-use actix_web::{App, HttpServer};
 use dotenv::dotenv;
 use log::info;
 use std::env;
+use axum::Router;
+use crate::routes::routes;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() {
     dotenv().ok();
     env_logger::init();
 
@@ -26,10 +27,10 @@ async fn main() -> std::io::Result<()> {
 
     info!("Binding server to address: {}", bind_address);
 
-    HttpServer::new(move || {
-        App::new().configure(routes::config_factory(pool.clone()))
-    })
-        .bind(bind_address)?
-        .run()
+    let app = Router::new().nest("/v1", routes(pool));
+
+    let listener = tokio::net::TcpListener::bind(bind_address)
         .await
+        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

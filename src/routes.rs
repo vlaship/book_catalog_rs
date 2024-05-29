@@ -1,6 +1,8 @@
-use actix_web::{web, HttpRequest};
+use std::sync::Arc;
+use axum::extract::{OriginalUri, Path};
+use axum::{Json, Router};
+use axum::routing::{get, post};
 use sqlx::PgPool;
-use web::ServiceConfig;
 use crate::auth::controller::AuthController;
 use crate::auth::model::{SigninRequest, SignupRequest};
 use crate::auth::service::AuthService;
@@ -8,49 +10,54 @@ use crate::user::controller::UserController;
 use crate::user::repo::UserRepo;
 use crate::user::service::UserService;
 
-pub fn configure(cfg: &mut ServiceConfig, pool: &PgPool) {
-    let user_repo = UserRepo::new(pool.clone());
-    let user_svc = UserService::new(user_repo.clone());
-    let user_ctrl = UserController::new(user_svc);
-    let auth_svc = AuthService::new(user_repo.clone());
-    let auth_ctrl = AuthController::new(auth_svc);
+pub fn routes(pool: PgPool) -> Router {
+    let user_repo = Arc::new(UserRepo::new(pool.clone()));
+    let user_svc = UserService::new(Arc::clone(&user_repo));
+    let auth_svc = AuthService::new(Arc::clone(&user_repo));
+    let user_ctrl = Arc::new(UserController::new(user_svc));
+    let auth_ctrl = Arc::new(AuthController::new(auth_svc));
 
-    cfg.app_data(web::Data::new(user_ctrl.clone()));
-    cfg.app_data(web::Data::new(auth_ctrl.clone()));
+    let user = Router::new()
+        .route("/:login", get({
+            let user_ctrl = Arc::clone(&user_ctrl);
+            move |path: Path<String>, OriginalUri(uri): OriginalUri| {
+                let user_ctrl = Arc::clone(&user_ctrl);
+                async move {
+                    user_ctrl.get_user_by_login(uri.to_string().as_str(), path.0).await
+                }
+            }
+        }))
+        .route("/", get({
+            let user_ctrl = Arc::clone(&user_ctrl);
+            move |OriginalUri(uri): OriginalUri| {
+                let user_ctrl = Arc::clone(&user_ctrl);
+                async move {
+                    user_ctrl.get_users(uri.to_string().as_str()).await
+                }
+            }
+        }));
 
-    let user_ctrl_clone = user_ctrl.clone();
-    cfg.route("/v1/user/{login}", web::get().to(move |req: HttpRequest, login: web::Path<String>| {
-        let user_ctrl = user_ctrl_clone.clone();
-        async move {
-            user_ctrl.get_user_by_login(req, login).await
-        }
-    }));
+    let auth = Router::new()
+        .route("/signup", post({
+            let auth_ctrl = Arc::clone(&auth_ctrl);
+            move |OriginalUri(uri): OriginalUri, Json(dto): Json<SignupRequest>| {
+                let auth_ctrl = Arc::clone(&auth_ctrl);
+                async move {
+                    auth_ctrl.signup(uri.to_string().as_str(), dto).await
+                }
+            }
+        }))
+        .route("/signin", post({
+            let auth_ctrl = Arc::clone(&auth_ctrl);
+            move |OriginalUri(uri): OriginalUri, Json(dto): Json<SigninRequest>| {
+                let auth_ctrl = Arc::clone(&auth_ctrl);
+                async move {
+                    auth_ctrl.signin(uri.to_string().as_str(), dto).await
+                }
+            }
+        }));
 
-    let user_ctrl_clone = user_ctrl.clone();
-    cfg.route("/v1/users", web::get().to(move |req: HttpRequest, | {
-        let user_ctrl = user_ctrl_clone.clone();
-        async move {
-            user_ctrl.get_users(req).await
-        }
-    }));
-
-    let auth_ctrl_clone = auth_ctrl.clone();
-    cfg.route("/v1/auth/signup", web::post().to(move |req: HttpRequest, body: web::Json<SignupRequest>| {
-        let auth_ctrl = auth_ctrl_clone.clone();
-        async move {
-            auth_ctrl.signup(req, body).await
-        }
-    }));
-
-    let auth_ctrl_clone = auth_ctrl.clone();
-    cfg.route("/v1/auth/signin", web::post().to(move |req: HttpRequest, body: web::Json<SigninRequest>| {
-        let auth_ctrl = auth_ctrl_clone.clone();
-        async move {
-            auth_ctrl.signin(req, body).await
-        }
-    }));
-}
-
-pub fn config_factory(pool: PgPool) -> impl FnOnce(&mut ServiceConfig) + Clone {
-    move |cfg: &mut ServiceConfig| configure(cfg, &pool)
+    Router::new()
+        .nest("/user", user)
+        .nest("/auth", auth)
 }

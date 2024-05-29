@@ -1,6 +1,7 @@
-use actix_web::{HttpResponse, http::StatusCode};
+use axum::response::Json;
 use serde_json::{json, Value};
 use chrono::Utc;
+use http::StatusCode;
 use crate::err::errors::AppError;
 use crate::err::errors::AppError::{BadRequest, CreateUserError, FindUserError, ListUsersError, NotFound, Unauthorized};
 use crate::http::model::ErrorResponse;
@@ -16,9 +17,8 @@ impl ErrorResponse {
         }
     }
 
-    pub fn to_response(&self) -> HttpResponse {
-        HttpResponse::build(StatusCode::from_u16(self.status).unwrap())
-            .json(self)
+    pub fn to_response(&self) -> Json<Value> {
+        Json(json!(self))
     }
 }
 
@@ -39,8 +39,7 @@ pub fn format_validation_errors(errors: validator::ValidationErrors) -> Value {
     json!(error_map)
 }
 
-// handle all AppError: NotFound call handle_404_error, and so on
-pub fn handle_error(error: AppError, path: &str) -> HttpResponse {
+pub fn handle_error(error: AppError, path: &str) -> Json<Value> {
     match error {
         BadRequest() => handle_400_error(&error.to_string(), path, None),
         Unauthorized() => handle_401_error(&error.to_string(), path),
@@ -48,27 +47,26 @@ pub fn handle_error(error: AppError, path: &str) -> HttpResponse {
         ListUsersError() => handle_500_error(&error.to_string(), path),
         FindUserError(_) => handle_404_error(&error.to_string(), path),
         CreateUserError(_) => handle_500_error(&error.to_string(), path),
-
         _ => handle_500_error(&error.to_string(), path),
     }
 }
 
-pub fn handle_400_error(message: &str, path: &str, errors: Option<Value>) -> HttpResponse {
+pub fn handle_400_error(message: &str, path: &str, errors: Option<Value>) -> Json<Value> {
     let error_response = ErrorResponse::new(StatusCode::BAD_REQUEST, message, path, errors);
     error_response.to_response()
 }
 
-pub fn handle_401_error(message: &str, path: &str) -> HttpResponse {
+pub fn handle_401_error(message: &str, path: &str) -> Json<Value> {
     let error_response = ErrorResponse::new(StatusCode::UNAUTHORIZED, message, path, None);
     error_response.to_response()
 }
 
-pub fn handle_404_error(message: &str, path: &str) -> HttpResponse {
+pub fn handle_404_error(message: &str, path: &str) -> Json<Value> {
     let error_response = ErrorResponse::new(StatusCode::NOT_FOUND, message, path, None);
     error_response.to_response()
 }
 
-pub fn handle_500_error(message: &str, path: &str) -> HttpResponse {
+pub fn handle_500_error(message: &str, path: &str) -> Json<Value> {
     let error_response = ErrorResponse::new(StatusCode::INTERNAL_SERVER_ERROR, message, path, None);
     error_response.to_response()
 }

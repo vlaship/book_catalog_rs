@@ -1,5 +1,5 @@
 ### get user list
-GET {{host}}/v1/user/list
+GET {{host}}/v1/user
 
 ### get user by login
-GET {{host}}/v1/user/login
+GET {{host}}/v1/user/admin

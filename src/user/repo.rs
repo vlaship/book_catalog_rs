@@ -11,7 +11,6 @@ const SELECT_USERS: &'static str = "SELECT login FROM book_catalog_rs.users";
 //language=SQL
 const INSERT_USER: &'static str = "INSERT INTO book_catalog_rs.users (id, login, password) VALUES ($1, $2, $3)";
 
-#[derive(Clone)]
 pub struct UserRepo {
     pool: PgPool,
 }
