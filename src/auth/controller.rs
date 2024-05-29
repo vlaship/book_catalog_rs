@@ -3,7 +3,6 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse},
 };
-use http::Uri;
 use validator::Validate;
 use crate::http::error_handlers::{format_validation_errors, handle_400_error, handle_401_error, handle_error};
 use crate::auth::model::{SigninRequest, SigninResponse, SignupRequest, SignupResponse};
@@ -17,10 +16,7 @@ impl AuthController {
     pub fn new(auth_service: AuthService) -> Self {
         Self { svc: auth_service }
     }
-    pub async fn signup(&self, uri: Uri, dto: SignupRequest) -> impl IntoResponse {
-        let uri = uri.to_string();
-        let path = uri.as_str();
-
+    pub async fn signup(&self, path: &str, dto: SignupRequest) -> impl IntoResponse {
         if let Err(e) = dto.validate() {
             return handle_400_error("Validation error", path, Some(format_validation_errors(e))).into_response();
         }
@@ -31,10 +27,7 @@ impl AuthController {
         }
     }
 
-    pub async fn signin(&self, uri: Uri, dto: SigninRequest) -> impl IntoResponse {
-        let uri = uri.to_string();
-        let path = uri.as_str();
-
+    pub async fn signin(&self, path: &str, dto: SigninRequest) -> impl IntoResponse {
         if let Err(e) = dto.validate() {
             return handle_400_error("Validation error", path, Some(format_validation_errors(e))).into_response();
         }

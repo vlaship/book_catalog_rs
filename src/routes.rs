@@ -1,8 +1,7 @@
 use std::sync::Arc;
-use axum::extract::Path;
+use axum::extract::{OriginalUri, Path};
 use axum::{Json, Router};
 use axum::routing::{get, post};
-use http::Uri;
 use sqlx::PgPool;
 use crate::auth::controller::AuthController;
 use crate::auth::model::{SigninRequest, SignupRequest};
@@ -21,19 +20,19 @@ pub fn routes(pool: PgPool) -> Router {
     let user = Router::new()
         .route("/:login", get({
             let user_ctrl = Arc::clone(&user_ctrl);
-            move |path: Path<String>, uri: Uri| {
+            move |path: Path<String>, OriginalUri(uri): OriginalUri| {
                 let user_ctrl = Arc::clone(&user_ctrl);
                 async move {
-                    user_ctrl.get_user_by_login(uri, path.0).await
+                    user_ctrl.get_user_by_login(uri.to_string().as_str(), path.0).await
                 }
             }
         }))
         .route("/", get({
             let user_ctrl = Arc::clone(&user_ctrl);
-            move |uri: Uri| {
+            move |OriginalUri(uri): OriginalUri| {
                 let user_ctrl = Arc::clone(&user_ctrl);
                 async move {
-                    user_ctrl.get_users(uri).await
+                    user_ctrl.get_users(uri.to_string().as_str()).await
                 }
             }
         }));
@@ -41,19 +40,19 @@ pub fn routes(pool: PgPool) -> Router {
     let auth = Router::new()
         .route("/signup", post({
             let auth_ctrl = Arc::clone(&auth_ctrl);
-            move |uri: Uri, Json(dto): Json<SignupRequest>| {
+            move |OriginalUri(uri): OriginalUri, Json(dto): Json<SignupRequest>| {
                 let auth_ctrl = Arc::clone(&auth_ctrl);
                 async move {
-                    auth_ctrl.signup(uri, dto).await
+                    auth_ctrl.signup(uri.to_string().as_str(), dto).await
                 }
             }
         }))
         .route("/signin", post({
             let auth_ctrl = Arc::clone(&auth_ctrl);
-            move |uri: Uri, Json(dto): Json<SigninRequest>| {
+            move |OriginalUri(uri): OriginalUri, Json(dto): Json<SigninRequest>| {
                 let auth_ctrl = Arc::clone(&auth_ctrl);
                 async move {
-                    auth_ctrl.signin(uri, dto).await
+                    auth_ctrl.signin(uri.to_string().as_str(), dto).await
                 }
             }
         }));
