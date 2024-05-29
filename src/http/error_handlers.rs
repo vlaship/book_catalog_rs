@@ -1,7 +1,7 @@
-use hyper::StatusCode;
 use axum::response::Json;
 use serde_json::{json, Value};
 use chrono::Utc;
+use http::StatusCode;
 use crate::err::errors::AppError;
 use crate::err::errors::AppError::{BadRequest, CreateUserError, FindUserError, ListUsersError, NotFound, Unauthorized};
 use crate::http::model::ErrorResponse;
