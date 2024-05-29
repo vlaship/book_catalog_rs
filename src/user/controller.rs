@@ -3,7 +3,6 @@ use actix_web::{HttpRequest, HttpResponse, Responder};
 use actix_web::web::Path;
 use crate::http::error_handlers::{handle_404_error, handle_500_error, handle_error};
 
-#[derive(Clone)]
 pub struct UserController {
     svc: UserService,
 }

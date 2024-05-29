@@ -5,7 +5,6 @@ use actix_web::{web, HttpRequest, HttpResponse, Responder};
 use log::info;
 use validator::Validate;
 
-#[derive(Clone)]
 pub struct AuthController {
     svc: AuthService,
 }

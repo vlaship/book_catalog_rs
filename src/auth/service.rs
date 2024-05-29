@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::auth::auth_utils::{hash_password, verify_password};
 use crate::auth::model::{SigninRequest, SignupRequest};
 use crate::user::repo::UserRepo;
@@ -5,13 +6,12 @@ use crate::err::errors::AppError;
 use crate::user::model::User;
 use crate::utils::id_generator::generate_id;
 
-#[derive(Clone)]
 pub struct AuthService {
-    repo: UserRepo,
+    repo: Arc<UserRepo>,
 }
 
 impl AuthService {
-    pub fn new(user_repo: UserRepo) -> Self {
+    pub fn new(user_repo: Arc<UserRepo>) -> Self {
         Self { repo: user_repo }
     }
 

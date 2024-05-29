@@ -1,15 +1,15 @@
+use std::sync::Arc;
 use crate::user::repo::UserRepo;
 use actix_web::web::Path;
 use crate::err::errors::AppError;
 use crate::user::model::User;
 
-#[derive(Clone)]
 pub struct UserService {
-    repo: UserRepo,
+    repo: Arc<UserRepo>,
 }
 
 impl UserService {
-    pub fn new(user_repo: UserRepo) -> Self {
+    pub fn new(user_repo: Arc<UserRepo>) -> Self {
         Self { repo: user_repo }
     }
 

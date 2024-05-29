@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use actix_web::{web, HttpRequest};
 use sqlx::PgPool;
 use web::ServiceConfig;
@@ -9,43 +10,55 @@ use crate::user::repo::UserRepo;
 use crate::user::service::UserService;
 
 pub fn configure(cfg: &mut ServiceConfig, pool: &PgPool) {
-    let user_repo = UserRepo::new(pool.clone());
-    let user_svc = UserService::new(user_repo.clone());
-    let user_ctrl = UserController::new(user_svc);
-    let auth_svc = AuthService::new(user_repo.clone());
-    let auth_ctrl = AuthController::new(auth_svc);
+    let user_repo = Arc::new(UserRepo::new(pool.clone()));
+    let user_svc = UserService::new(Arc::clone(&user_repo));
+    let user_ctrl = Arc::new(UserController::new(user_svc));
+    let auth_svc = AuthService::new(Arc::clone(&user_repo));
+    let auth_ctrl = Arc::new(AuthController::new(auth_svc));
 
-    let user_ctrl_clone = user_ctrl.clone();
-    cfg.route("/v1/user/{login}", web::get().to(move |req: HttpRequest, login: web::Path<String>| {
-        let user_ctrl = user_ctrl_clone.clone();
-        async move {
-            user_ctrl.get_user_by_login(req, login).await
-        }
-    }));
+    cfg.service(
+        web::scope("/v1/user")
+            .route("/{login}", web::get().to({
+                let user_ctrl_cloned = Arc::clone(&user_ctrl);
+                move |req: HttpRequest, login: web::Path<String>| {
+                    let user_ctrl_cloned = Arc::clone(&user_ctrl_cloned);
+                    async move {
+                        user_ctrl_cloned.get_user_by_login(req, login).await
+                    }
+                }
+            }))
+            .route("/", web::get().to({
+                let user_ctrl_cloned = Arc::clone(&user_ctrl);
+                move |req: HttpRequest| {
+                    let user_ctrl_cloned = Arc::clone(&user_ctrl_cloned);
+                    async move {
+                        user_ctrl_cloned.get_users(req).await
+                    }
+                }
+            })),
+    );
 
-    let user_ctrl_clone = user_ctrl.clone();
-    cfg.route("/v1/users", web::get().to(move |req: HttpRequest, | {
-        let user_ctrl = user_ctrl_clone.clone();
-        async move {
-            user_ctrl.get_users(req).await
-        }
-    }));
-
-    let auth_ctrl_clone = auth_ctrl.clone();
-    cfg.route("/v1/auth/signup", web::post().to(move |req: HttpRequest, body: web::Json<SignupRequest>| {
-        let auth_ctrl = auth_ctrl_clone.clone();
-        async move {
-            auth_ctrl.signup(req, body).await
-        }
-    }));
-
-    let auth_ctrl_clone = auth_ctrl.clone();
-    cfg.route("/v1/auth/signin", web::post().to(move |req: HttpRequest, body: web::Json<SigninRequest>| {
-        let auth_ctrl = auth_ctrl_clone.clone();
-        async move {
-            auth_ctrl.signin(req, body).await
-        }
-    }));
+    cfg.service(
+        web::scope("/v1/auth")
+            .route("/signup", web::post().to({
+                let auth_ctrl_cloned = Arc::clone(&auth_ctrl);
+                move |req: HttpRequest, body: web::Json<SignupRequest>| {
+                    let auth_ctrl_cloned = Arc::clone(&auth_ctrl_cloned);
+                    async move {
+                        auth_ctrl_cloned.signup(req, body).await
+                    }
+                }
+            }))
+            .route("/signin", web::post().to({
+                let auth_ctrl_cloned = Arc::clone(&auth_ctrl);
+                move |req: HttpRequest, body: web::Json<SigninRequest>| {
+                    let auth_ctrl_cloned = Arc::clone(&auth_ctrl_cloned);
+                    async move {
+                        auth_ctrl_cloned.signin(req, body).await
+                    }
+                }
+            }))
+    );
 }
 
 pub fn config_factory(pool: PgPool) -> impl FnOnce(&mut ServiceConfig) + Clone {
