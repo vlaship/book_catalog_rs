@@ -1,0 +1,13 @@
+.idea/
+.github/
+.vscode/
+target/
+http/
+
+Cargo.lock
+
+.gitignore
+.whitesource
+
+docker-compose.yaml
+README.md
