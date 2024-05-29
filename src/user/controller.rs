@@ -1,7 +1,7 @@
 use crate::user::service::UserService;
-use actix_web::{HttpRequest, HttpResponse, Responder};
-use actix_web::web::Path;
-use crate::http::error_handlers::{handle_404_error, handle_500_error, handle_error};
+use axum::{response::IntoResponse, Json};
+use http::Uri;
+use crate::http::error_handlers::handle_error;
 
 pub struct UserController {
     svc: UserService,
@@ -12,17 +12,26 @@ impl UserController {
         Self { svc: user_service }
     }
 
-    pub async fn get_users(&self, req: HttpRequest) -> impl Responder {
+    pub async fn get_users(&self, uri: Uri) -> impl IntoResponse {
         match self.svc.list_users().await {
-            Ok(users) => HttpResponse::Ok().json(users),
-            Err(e) => handle_error(e, req.path()),
+            Ok(users) => (http::StatusCode::OK, Json(users)).into_response(),
+            Err(e) => {
+                let uri = uri.to_string();
+                let path = uri.as_str();
+                handle_error(e, path).into_response()
+            }
         }
     }
 
-    pub async fn get_user_by_login(&self, req: HttpRequest, user_login: Path<String>) -> impl Responder {
-        match self.svc.get_user_by_login(&user_login).await {
-            Ok(user) => HttpResponse::Ok().json(user),
-            Err(e) => handle_error(e, req.path()),
+    pub async fn get_user_by_login(&self, uri: Uri, login: String) -> impl IntoResponse {
+        match self.svc.get_user_by_login(login).await {
+            Ok(user) => (http::StatusCode::OK, Json(user)).into_response(),
+            Err(e) => {
+                let uri = uri.to_string();
+
+                let path = uri.as_str();
+                handle_error(e, path).into_response()
+            }
         }
     }
 }

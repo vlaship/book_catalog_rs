@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use crate::user::repo::UserRepo;
-use actix_web::web::Path;
 use crate::err::errors::AppError;
 use crate::user::model::User;
 
@@ -19,7 +18,7 @@ impl UserService {
 
     pub async fn get_user_by_login(
         &self,
-        user_login: &Path<String>,
+        user_login: String,
     ) -> Result<User, AppError> {
         self.repo.find_user_by_login(&user_login).await
     }

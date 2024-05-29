@@ -15,12 +15,12 @@ impl AuthService {
         Self { repo: user_repo }
     }
 
-    pub async fn sign_up(&self, info: SignupRequest) -> Result<i64, AppError> {
+    pub async fn sign_up(&self, req: SignupRequest) -> Result<i64, AppError> {
         let user_id = generate_id();
-        let password = hash_password(&info.password);
+        let password = hash_password(&req.password);
         let new_user = User {
             user_id,
-            login: info.login.clone(),
+            login: req.login.clone(),
             password,
         };
         let result = self.repo.repo_create_user(&new_user).await;
@@ -30,9 +30,9 @@ impl AuthService {
         }
     }
 
-    pub async fn sign_in(&self, info: &SigninRequest) -> Option<String> {
-        if let Ok(user) = self.repo.find_user_by_login(&info.login).await {
-            if verify_password(&info.password, &user.password) {
+    pub async fn sign_in(&self, req: &SigninRequest) -> Option<String> {
+        if let Ok(user) = self.repo.find_user_by_login(&req.login).await {
+            if verify_password(&req.password, &user.password) {
                 return Some("dummy_jwt_token".to_string());
             }
         }
